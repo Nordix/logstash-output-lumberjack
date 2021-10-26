@@ -15,8 +15,17 @@ class LogStash::Outputs::Lumberjack < LogStash::Outputs::Base
   # the port to connect to
   config :port, :validate => :number, :required => true
 
-  # ssl certificate to use
+  # Path to CA certificate to use to validate the server certificate
   config :ssl_certificate, :validate => :path, :required => true
+
+  # Path to client certificate to use to authenticate towards the server
+  config :ssl_cert, :validate => :path
+
+  # Path to client key to use to authenticate towards the server.
+  config :ssl_key, :validate => :path
+
+  # Passphrase for decrypting private key, used when key is stored as encrypted
+  config :ssl_key_passphrase, :validate => :password, :default => nil
 
   # To make efficient calls to the lumberjack output we are buffering events locally.
   # if the number of events exceed the number the declared `flush_size` we will
@@ -83,7 +92,9 @@ class LogStash::Outputs::Lumberjack < LogStash::Outputs::Base
       ips = []
       @hosts.each { |host| ips += Resolv.getaddresses host }
       @client = Lumberjack::Client.new(:addresses => ips.uniq, :port => @port,
-        :ssl_certificate => @ssl_certificate, :flush_size => @flush_size)
+        :ssl_certificate => @ssl_certificate,
+        :ssl_cert => @ssl_cert, :ssl_key => @ssl_key, :ssl_key_passphrase => @ssl_key_passphrase,
+        :flush_size => @flush_size)
     rescue Exception => e
       @logger.error("All hosts unavailable, sleeping", :hosts => ips.uniq, :e => e,
         :backtrace => e.backtrace)
