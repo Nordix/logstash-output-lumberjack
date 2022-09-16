@@ -27,6 +27,12 @@ class LogStash::Outputs::Lumberjack < LogStash::Outputs::Base
   # Passphrase for decrypting private key, used when key is stored as encrypted
   config :ssl_key_passphrase, :validate => :password, :default => nil
 
+  # CRL file or bundle of CRLs
+  config :ssl_crl, :validate => :path
+
+  # Check CRL for only leaf certificate (false) or require CRL check for the complete chain (true)
+  config :ssl_crl_check_all, :validate => :boolean, :default => false
+
   # To make efficient calls to the lumberjack output we are buffering events locally.
   # if the number of events exceed the number the declared `flush_size` we will
   # send them to the logstash server.
@@ -94,6 +100,7 @@ class LogStash::Outputs::Lumberjack < LogStash::Outputs::Base
       @client = Lumberjack::Client.new(:addresses => ips.uniq, :port => @port,
         :ssl_certificate => @ssl_certificate,
         :ssl_cert => @ssl_cert, :ssl_key => @ssl_key, :ssl_key_passphrase => @ssl_key_passphrase,
+        :ssl_crl => @ssl_crl , :ssl_crl_check_all => @ssl_crl_check_all,
         :flush_size => @flush_size)
     rescue Exception => e
       @logger.error("All hosts unavailable, sleeping", :hosts => ips.uniq, :e => e,
